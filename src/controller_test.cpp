@@ -34,41 +34,44 @@ int ControllerTest::initialising() {
   // The FPGA has to be initialised at least once
   ico_io.init();
 
-  // test mototrs and encoders
-  bool test1, test2;
-  int encCountThresh = 200;
-  struct timespec stopTime;
-  evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
+  /*   // test mototrs and encoders
+    bool test1, test2;
+    int encCountThresh = 200;
+    struct timespec stopTime;
+    evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
 
-  stopTime.tv_sec += 1;
-  actuate_data.pwm2 = PWMMax * 0.1;
-  actuate_data.pwm1 = -PWMMax * 0.1;
-  evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
-  actuate_data.pwm2 = 0;
-  actuate_data.pwm1 = 0;
+    stopTime.tv_sec += 1;
+    actuate_data.pwm2 = PWMMax * 0.1;
+    actuate_data.pwm1 = -PWMMax * 0.1;
+    evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
+    actuate_data.pwm2 = 0;
+    actuate_data.pwm1 = 0;
+    int encLeft = sample_data.channel2;   // current reading of the left encoder
+    int encRight = sample_data.channel1;  // current reading of the right
+    encoder test1 = encLeft > encCountThresh && encRight < -encCountThresh;
+    evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
+
+    monitor.printf("%d, %d", encLeft, encRight);
+
+    stopTime.tv_sec += 1;
+    actuate_data.pwm2 = -PWMMax * 0.1;
+    actuate_data.pwm1 = PWMMax * 0.1;
+    evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
+    actuate_data.pwm2 = 0;
+    actuate_data.pwm1 = 0;
+    encLeft = sample_data.channel2;   // current reading of the left encoder
+    encRight = sample_data.channel1;  // current reading of the right encoder
+    test2 = abs(encLeft) < encCountThresh * 0.5 &&
+            abs(encRight) < encCountThresh * 0.5;
+
+    if (test1 && test2)
+      monitor.printf("Motors and encoders tested successfully");
+    else
+      monitor.printf("Test failed, check motors and encoders"); */
+
+  // Record the initial encoders reading in case it is not 0
   int encLeft = sample_data.channel2;   // current reading of the left encoder
   int encRight = sample_data.channel1;  // current reading of the right encoder
-  test1 = encLeft > encCountThresh && encRight < -encCountThresh;
-  evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
-
-  monitor.printf("%d, %d", encLeft, encRight);
-
-  stopTime.tv_sec += 1;
-  actuate_data.pwm2 = -PWMMax * 0.1;
-  actuate_data.pwm1 = PWMMax * 0.1;
-  evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
-  actuate_data.pwm2 = 0;
-  actuate_data.pwm1 = 0;
-  encLeft = sample_data.channel2;   // current reading of the left encoder
-  encRight = sample_data.channel1;  // current reading of the right encoder
-  test2 = abs(encLeft) < encCountThresh * 0.5 &&
-          abs(encRight) < encCountThresh * 0.5;
-
-  if (test1 && test2)
-    monitor.printf("Motors and encoders tested successfully");
-  else
-    monitor.printf("Test failed, check motors and encoders");
-
   prevEncLeft = encLeft;
   prevEncRight = encRight;
   return 1;
@@ -87,7 +90,7 @@ int ControllerTest::run() {
   // Do what you need to do
   // Return 1 to go to stopping state
 
-  evl_printf("Hello from run\n");  // Do something
+  //evl_printf("Hello from run\n");  // Do something
 
   int encLeft = sample_data.channel2;   // current reading of the left encoder
   int encRight = sample_data.channel1;  // current reading of the right encoder
@@ -114,9 +117,9 @@ int ControllerTest::run() {
   prevEncRight = encRight;
 
   double deltaLeft =
-      2 * M_PI * leftDiff / encMax;  // change in position of the left wheel in
+      2 * M_PI * leftDiff / turnCount;  // change in position of the left wheel in
                                      // radians since prevoius iteration
-  double deltaRight = 2 * M_PI * rightDiff / encMax;  // same of the right wheel
+  double deltaRight = 2 * M_PI * rightDiff / turnCount;  // same of the right wheel
 
   double deltaDistLeft =
       deltaLeft * diameter / 2;  // distance traveled by the left wheel
@@ -125,7 +128,7 @@ int ControllerTest::run() {
 
   double deltaDist =
       (deltaDistLeft + deltaDistRight) / 2;  // distance traveled by the robot
-  double deltaTheta = (deltaDistLeft - deltaDistRight) /
+  double deltaTheta = (deltaDistRight - deltaDistLeft) /
                       wheelbase;  // how much the robot rotated in rad
 
   xPos += deltaDist * cos(theta + deltaTheta / 2);
@@ -148,8 +151,10 @@ int ControllerTest::run() {
     actuate_data.pwm2 = 0;
     return 1;
   }
-  actuate_data.pwm2 = PWMMax * y[0];   // set left motor velocity
-  actuate_data.pwm1 = -PWMMax * y[1];  // set right motor velocity
+  actuate_data.pwm2 = PWMMax * y[0] / 100;   // set left motor velocity
+  actuate_data.pwm1 = -PWMMax * y[1] / 100;  // set right motor velocity
+
+  monitor.printf("%f, %f, %f, %f\n", deltaLeft, deltaRight, ros_msg.left_wheel_vel, ros_msg.right_wheel_vel);
 
   return 0;
 }
