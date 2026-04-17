@@ -1,3 +1,12 @@
+//==============================================================================
+// Authors : Max Solis, Aleksei Obshatko
+// Group : ASDfR 5
+// License : LGPL open source license
+//
+// Brief : Finite State Machine code for controlling RELBot. Based
+// on the provided templates
+//==============================================================================
+
 #include "controller_test.hpp"
 
 ControllerTest::ControllerTest(uint write_decimator_freq, uint monitor_freq)
@@ -34,41 +43,6 @@ int ControllerTest::initialising() {
   // The FPGA has to be initialised at least once
   ico_io.init();
 
-  /*   // test mototrs and encoders
-    bool test1, test2;
-    int encCountThresh = 200;
-    struct timespec stopTime;
-    evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
-
-    stopTime.tv_sec += 1;
-    actuate_data.pwm2 = PWMMax * 0.1;
-    actuate_data.pwm1 = -PWMMax * 0.1;
-    evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
-    actuate_data.pwm2 = 0;
-    actuate_data.pwm1 = 0;
-    int encLeft = sample_data.channel2;   // current reading of the left encoder
-    int encRight = sample_data.channel1;  // current reading of the right
-    encoder test1 = encLeft > encCountThresh && encRight < -encCountThresh;
-    evl_read_clock(EVL_CLOCK_MONOTONIC, &stopTime);
-
-    monitor.printf("%d, %d", encLeft, encRight);
-
-    stopTime.tv_sec += 1;
-    actuate_data.pwm2 = -PWMMax * 0.1;
-    actuate_data.pwm1 = PWMMax * 0.1;
-    evl_sleep_until(EVL_CLOCK_MONOTONIC, &stopTime);
-    actuate_data.pwm2 = 0;
-    actuate_data.pwm1 = 0;
-    encLeft = sample_data.channel2;   // current reading of the left encoder
-    encRight = sample_data.channel1;  // current reading of the right encoder
-    test2 = abs(encLeft) < encCountThresh * 0.5 &&
-            abs(encRight) < encCountThresh * 0.5;
-
-    if (test1 && test2)
-      monitor.printf("Motors and encoders tested successfully");
-    else
-      monitor.printf("Test failed, check motors and encoders"); */
-
   // Record the initial encoders reading in case it is not 0
   int encLeft = sample_data.channel2;   // current reading of the left encoder
   int encRight = sample_data.channel1;  // current reading of the right encoder
@@ -90,7 +64,7 @@ int ControllerTest::run() {
   // Do what you need to do
   // Return 1 to go to stopping state
 
-  //evl_printf("Hello from run\n");  // Do something
+  evl_printf("Hello from run\n");  // Do something
 
   int encLeft = sample_data.channel2;   // current reading of the left encoder
   int encRight = sample_data.channel1;  // current reading of the right encoder
@@ -117,9 +91,10 @@ int ControllerTest::run() {
   prevEncRight = encRight;
 
   double deltaLeft =
-      2 * M_PI * leftDiff / turnCount;  // change in position of the left wheel in
-                                     // radians since prevoius iteration
-  double deltaRight = 2 * M_PI * rightDiff / turnCount;  // same of the right wheel
+      2 * M_PI * leftDiff / turnCount;  // change in position of the left wheel
+                                        // in radians since prevoius iteration
+  double deltaRight =
+      2 * M_PI * rightDiff / turnCount;  // same of the right wheel
 
   double deltaDistLeft =
       deltaLeft * diameter / 2;  // distance traveled by the left wheel
@@ -134,9 +109,15 @@ int ControllerTest::run() {
   xPos += deltaDist * cos(theta + deltaTheta / 2);
   yPos += deltaDist * sin(theta + deltaTheta / 2);
   theta += deltaTheta;
+  // Truncate theta to [-pi;pi]
   theta = std::fmod(theta, 2 * M_PI);
-  theta = (theta < 0) ? theta + 2 * M_PI : theta;
+  if (theta > M_PI) {
+    theta -= 2 * M_PI;
+  } else if (theta <= -M_PI) {
+    theta += 2 * M_PI;
+  }
 
+  // send position to the sequence controller
   xeno_msg.x = xPos;
   xeno_msg.y = yPos;
   xeno_msg.theta = theta;
@@ -153,8 +134,6 @@ int ControllerTest::run() {
   }
   actuate_data.pwm2 = PWMMax * y[0] / 100;   // set left motor velocity
   actuate_data.pwm1 = -PWMMax * y[1] / 100;  // set right motor velocity
-
-  monitor.printf("%f, %f, %f, %f\n", deltaLeft, deltaRight, ros_msg.left_wheel_vel, ros_msg.right_wheel_vel);
 
   return 0;
 }

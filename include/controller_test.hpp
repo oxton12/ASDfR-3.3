@@ -1,3 +1,12 @@
+//==============================================================================
+// Authors : Max Solis, Aleksei Obshatko
+// Group : ASDfR 5
+// License : LGPL open source license
+//
+// Brief : Finite State Machine code for controlling RELBot. Based
+// on the provided templates
+//==============================================================================
+
 #ifndef CONTROLLER_TEST_HPP
 #define CONTROLLER_TEST_HPP
 
@@ -32,11 +41,11 @@ class ControllerTest : public XenoFrt20Sim {
   double u[4];
   double y[2];
 
-  int encMax = 16383;    // Maximal value of encoder reading
-  int turnCount = 4*encMax; // Amount of encoder counts per one rotation
-  int prevEncLeft = 0;   // Previous reading of the left encoder
-  int prevEncRight = 0;  // Previous reading of the right encoder
-  int PWMMax = 2047;     // Max value of PWM
+  int encMax = 16383;          // Maximal value of encoder reading
+  int turnCount = 4 * encMax;  // Amount of encoder counts per one rotation
+  int prevEncLeft = 0;         // Previous reading of the left encoder
+  int prevEncRight = 0;        // Previous reading of the right encoder
+  int PWMMax = 2047;           // Max value of PWM
 
   double diameter = 0.101;   // Wheel diameter in m
   double wheelbase = 0.209;  // Distance between wheels

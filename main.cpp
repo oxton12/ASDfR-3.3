@@ -1,3 +1,12 @@
+//==============================================================================
+// Authors : Max Solis, Aleksei Obshatko
+// Group : ASDfR 5
+// License : LGPL open source license
+//
+// Brief : Finite State Machine code for controlling RELBot. Based
+// on the provided templates
+//==============================================================================
+
 #include <pthread.h>
 #include <sys/types.h>
 
