@@ -144,6 +144,9 @@ int ControllerTest::stopping() {
   logger.stop();                        // Stop logger
   evl_printf("Hello from stopping\n");  // Do something
 
+  actuate_data.pwm2 = 0;
+  actuate_data.pwm1 = 0;
+
   return 1;
 }
 
@@ -161,6 +164,10 @@ int ControllerTest::pausing() {
   // harm to the physical system
 
   evl_printf("Hello from pausing\n");  // Do something
+
+  actuate_data.pwm2 = 0;
+  actuate_data.pwm1 = 0;
+
   return 1;
 }
 
